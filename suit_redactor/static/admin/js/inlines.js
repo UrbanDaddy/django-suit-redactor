@@ -65,7 +65,40 @@
         e.preventDefault();
         var totalForms = $("#id_" + options.prefix + "-TOTAL_FORMS");
         var template = $("#" + options.prefix + "-empty");
-        var row = template.clone(true);
+        // With the upgrade from Django 1.5 to 1.7, JavaScript inside this
+        // cloned node stopped being executed. The global $ reference continues
+        // to be jQuery 1.8.3. However, this function is passed django.jQuery
+        // as $. django.jQuery was upgraded from 1.4.2 to 1.9.1. The most
+        // recent versions of jQuery are 1.11.1 and 2.1.1.
+        //
+        // Things I consider strange:
+        // - jQuery is maintaining both series.
+        // - Django.contrib.admin needs two versions of jQuery.
+        // - Django 1.7 upgraded one but not the other.
+        // - Django 1.7 chose stable 1.x over 2.x.
+        //
+        // Is any of this relevant to the bug, though? When these cloned nodes
+        // are inserted into the DOM the JavaScript isn't executed anymore.
+        // Also, there's a parser error with $(template.html()), which creates
+        // DOM nodes from an HTML string generated from the DOM nodes. This is
+        // another very strange thing. My reading of 'clone' says that it
+        // maintains event bindings. My understanding of our usage of this is
+        // that there are no events bound. I am therefore proceeding with this
+        // hack that copies the HTML into a string, fixes it, and reparses it
+        // with jQuery. The trim is necessary because the leading spaces fuck
+        // up jQuery's regex that identifies selectors versus HTML content. I'm
+        // not using the 'html' function because we need the outer HTML:
+        //
+        //    http://stackoverflow.com/a/10405571/8710
+        //
+        // If I felt like digging into Django's internals, gutting the shit,
+        // and spitting on its grave, I would store these inline templates as
+        // text inside a script node and then apply a simple string replacement
+        // before embedding it in the DOM. This is how underscore templates and
+        // webGL shader programs are typically handled.
+        //
+        // <mstaugler>
+        var row = $(template[0].outerHTML.trim());
         row.removeClass(options.emptyCssClass)
           .addClass(options.formCssClass)
           .attr("id", options.prefix + "-" + nextIndex);
