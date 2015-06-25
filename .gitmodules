@@ -1,0 +1,3 @@
+[submodule "suit_redactor/static/suit-redactor/redactor"]
+	path = suit_redactor/static/suit-redactor/redactor
+	url = git@github.com:UrbanDaddy/redactor.git
