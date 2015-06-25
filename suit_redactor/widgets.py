@@ -71,12 +71,12 @@ class RedactorWidget(Textarea):
         # Redactor initialization isn't run in the empty (template) form.
         output += mark_safe("""
             <script type="text/javascript">
-                (function () {{
+                (function ($) {{
                     var id = '#id_{}';
                     if (id.indexOf('__prefix__') < 0) {{
                         $(id).redactor({});
                     }}
-                }}());
+                }}(django.jQuery));
             </script>
         """.format(name, json.dumps(self.editor_options)))
         return output
